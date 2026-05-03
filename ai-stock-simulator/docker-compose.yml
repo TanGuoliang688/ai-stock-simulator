@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  # MySQL 数据库
+  mysql:
+    image: mysql:8.0
+    container_name: stock-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: TANguoliang666
+      MYSQL_DATABASE: ai-stock-simulator
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - stock-network
+
+  # Redis 缓存
+  redis:
+    image: redis:5.0-alpine
+    container_name: stock-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - stock-network
+
+  # RabbitMQ 消息队列
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: stock-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - stock-network
+
+  # 后端服务
+  backend:
+    build:
+      context: ./ai-stock-simulator-backend
+      dockerfile: Dockerfile
+    container_name: stock-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ai-stock-simulator?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: TANguoliang666
+      SPRING_REDIS_HOST: redis
+      SPRING_RABBITMQ_HOST: rabbitmq
+      QWEN_API_KEY: ${QWEN_API_KEY}
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mysql
+      - redis
+      - rabbitmq
+    networks:
+      - stock-network
+
+  # 前端服务
+  frontend:
+    build:
+      context: ./ai-stock-simulator-frontend
+      dockerfile: Dockerfile
+    container_name: stock-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - stock-network
+
+volumes:
+  mysql-data:
+
+networks:
+  stock-network:
+    driver: bridge

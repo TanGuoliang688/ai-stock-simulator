@@ -1,0 +1,57 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Market from './pages/Market';
+import Trade from './pages/Trade';
+import Portfolio from './pages/Portfolio';
+import Assets from './pages/Assets';
+import TradeRecords from './pages/TradeRecords';
+import { useUserStore } from './stores/userStore';
+import StockDetail from './pages/StockDetail';
+
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+    const token = useUserStore((state) => state.token);
+    return token ? <>{children}</> : <Navigate to="/login" />;
+};
+
+function App() {
+    return (
+        <BrowserRouter>
+            <Routes>
+                <Route path="/login" element={<Login />} />
+
+                <Route path="/dashboard" element={
+                    <ProtectedRoute><Dashboard /></ProtectedRoute>
+                } />
+
+                <Route path="/market" element={
+                    <ProtectedRoute><Market /></ProtectedRoute>
+                } />
+
+                <Route path="/trade" element={
+                    <ProtectedRoute><Trade /></ProtectedRoute>
+                } />
+
+                <Route path="/portfolio" element={
+                    <ProtectedRoute><Portfolio /></ProtectedRoute>
+                } />
+
+                <Route path="/assets" element={
+                    <ProtectedRoute><Assets /></ProtectedRoute>
+                } />
+
+                <Route path="/trade-records" element={
+                    <ProtectedRoute><TradeRecords /></ProtectedRoute>
+                } />
+
+                <Route path="/" element={<Navigate to="/dashboard" />} />
+
+                <Route path="/stock/:symbol" element={
+                    <ProtectedRoute><StockDetail /></ProtectedRoute>
+                } />
+            </Routes>
+        </BrowserRouter>
+    );
+}
+
+export default App;
